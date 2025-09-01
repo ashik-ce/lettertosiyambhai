@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Letter to Friend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .bangla-font {
+    font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'SolaimanLipi', sans-serif !important;
+    font-size: 20px;
+    letter-spacing: 0.01em;
+    line-height: 2;
+}
+
+        /* Loading Screen */
+        .loading-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease-out;
+        }
+
+        .loading-circle {
+            width: 80px;
+            height: 80px;
+            border: 8px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1.5s linear infinite;
+        }
+
+        .loading-text {
+            color: white;
+            margin-top: 20px;
+            font-size: 18px;
+            letter-spacing: 1px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Envelope Container */
+        .envelope-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+
+        .envelope {
+            position: relative;
+            width: 350px;
+            height: 230px;
+            background: #f9f9f9;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            border-radius: 8px;
+            transition: transform 0.5s ease;
+        }
+
+        .envelope:hover {
+            transform: translateY(-10px);
+        }
+
+        .envelope-top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #e0e0e0;
+            border-radius: 8px;
+            clip-path: polygon(0 0, 100% 0, 50% 60%);
+            transform-origin: top;
+            transition: transform 0.8s ease;
+            z-index: 2;
+        }
+
+        .envelope.open .envelope-top {
+            transform: rotateX(180deg);
+        }
+
+        .envelope-bottom {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: #f9f9f9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .envelope-paper {
+            position: absolute;
+            width: 90%;
+            height: 85%;
+            background: white;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .envelope.open .envelope-paper {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .envelope-hint {
+            margin-top: 30px;
+            color: white;
+            font-size: 18px;
+            opacity: 0.8;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+
+        /* Envelope Stamp with Flower */
+        .envelope-stamp {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+            z-index: 3;
+        }
+
+        .flower-stamp {
+            width: 50px;
+            height: 50px;
+            position: relative;
+        }
+
+        .flower-stamp::before {
+            content: '🌸';
+            font-size: 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Envelope Name in Center */
+        .envelope-name {
+             position: absolute;
+    bottom: 20px;
+    left: 25px;
+    top: auto;
+    right: auto;
+    transform: none;
+    font-size: 20px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    z-index: 3;
+    text-align: left;
+    width: auto;
+        }
+
+        /* Letter Content */
+        .letter-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+            transition: opacity 1s ease-out;
+            overflow: hidden; /* keep this */
+        }
+
+        /* Make the letter box scrollable if content overflows */
+.letter {
+    background: white;
+    width: 90vw;
+    max-width: 650px;
+    max-height: 70vh;      /* Limit height on mobile */
+    min-height: 200px;
+    padding: 30px 10px;
+    border-radius: 10px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    line-height: 1.8;
+    font-size: 18px;
+    color: #333;
+    position: relative;
+    overflow-y: auto;      /* Enable vertical scroll */
+    background-image: 
+        linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 1%, rgba(255,255,255,0) 2%),
+        linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 1%, rgba(255,255,255,0) 2%);
+    background-size: 50px 50px;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 600px) {
+    .letter {
+        width: 98vw;
+        max-width: 98vw;
+        max-height: 60vh;
+        font-size: 16px;
+        padding: 18px 4vw;
+    }
+}
+
+        .letter::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+        }
+
+        .letter-text {
+            min-height: 200px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .recipient-name, .sender-name {
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: bold;
+            font-size: 22px;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.2em;
+            background-color: #333;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Flower Decorations */
+        .flower-decoration {
+            position: absolute;
+            font-size: 30px;
+            opacity: 0.7;
+            z-index: 0;
+        }
+
+        .flower-top-left {
+            top: 15px;
+            left: 15px;
+            transform: rotate(-15deg);
+        }
+
+        .flower-top-right {
+            top: 15px;
+            right: 15px;
+            transform: rotate(15deg);
+        }
+
+        .flower-bottom-left {
+            bottom: 15px;
+            left: 15px;
+            transform: rotate(-15deg);
+        }
+
+        .flower-bottom-right {
+            bottom: 15px;
+            right: 15px;
+            transform: rotate(15deg);
+        }
+
+        /* Particle Animation */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            animation: float 15s infinite linear;
+            background: none;
+    font-size: 18px;
+    color: gold;
+    width: auto;
+    height: auto;
+        }
+
+      @keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0) rotate(0deg);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    50% {
+        /* Add sideways drift */
+        transform: translateY(0vh) translateX(40px) rotate(180deg);
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) translateX(0) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+        /* Thank You Popup */
+        .thank-you-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .popup-content {
+            background: white;
+            padding: 50px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 550px;
+            transform: scale(0.7);
+            opacity: 0;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .thank-you-popup.show .popup-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .popup-content h2 {
+            color: #6a11cb;
+            margin-bottom: 25px;
+            font-size: 32px;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .popup-content p {
+            color: #555;
+            margin-bottom: 35px;
+            font-size: 20px;
+            line-height: 1.6;
+        }
+
+        .popup-button {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .popup-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f0f;
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Final Message */
+        .final-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            font-size: 28px;
+            display: none;
+            z-index: 200;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+            padding: 30px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .final-message.show {
+            opacity: 1;
+        }
+
+        .final-message h2 {
+            margin-bottom: 15px;
+            font-size: 36px;
+            background: linear-gradient(90deg, #ff9a9e, #fad0c4);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .final-message p {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-container" id="loadingScreen">
+        <div class="loading-circle"></div>
+        <div class="loading-text">Preparing your letter...</div>
+    </div>
+
+    <!-- Envelope Container -->
+    <div class="envelope-container" id="envelopeContainer">
+        <div class="envelope" id="envelope">
+            <div class="envelope-top"></div>
+            <div class="envelope-bottom">
+                <div class="envelope-paper"></div>
+            </div>
+            <div class="envelope-stamp">
+                <div class="flower-stamp"></div>
+            </div>
+            <div class="envelope-name">For: <span id="recipientName">Nafis</span></div>
+        </div>
+        <div class="envelope-hint">Click to open the envelope</div>
+    </div>
+
+    <!-- Letter Content -->
+    <div class="letter-container" id="letterContainer">
+        <div class="particles-container" id="particlesContainer"></div>
+        <div class="letter">
+           
+            <div class="letter-text" id="letterText">
+                <span class="typing-cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thank You Popup -->
+    <div class="thank-you-popup" id="thankYouPopup">
+        <div class="popup-content" id="popupContent">
+            <h2>Thank You!</h2>
+            <p>Hope your friend enjoys reading this special letter!</p>
+            <button class="popup-button" id="closePopup">Close</button>
+        </div>
+    </div>
+
+    <!-- Final Message -->
+    <div class="final-message" id="finalMessage">
+        <h2>Your letter has been sent with love!</h2>
+        <p>The magic of friendship lives forever</p>
+    </div>
+
+    <script>
+        // Letter content
+const letterGreeting = "প্রিয় নাফিস,";
+const letterBody = `আশা করি তুমি ভালো আছো। এই চিঠির মাধ্যমে তোমাকে জানাতে চাই, আমাদের বন্ধুত্ব আমার জীবনের অন্যতম বড় আশীর্বাদ। সুখ-দুঃখের সব মুহূর্তে তুমি পাশে ছিলে, এজন্য আমি কৃতজ্ঞ।
+
+আমাদের সেই মজার স্মৃতিগুলো মনে আছে? গভীর রাতে গল্প, হঠাৎ ঘুরতে যাওয়া—সবকিছুই আমার কাছে অমূল্য। তোমার হাসি, দয়া আর সহযোগিতা আমার জীবনে আনন্দের উৎস।
+
+জীবন কখনো কঠিন হলেও, তোমার মতো বন্ধু থাকলে সব সহজ লাগে। তুমি সাধারণ মুহূর্তকেও বিশেষ করে তুলতে পারো।
+
+ভবিষ্যতে আরও অনেক সুন্দর স্মৃতি তৈরি করব, এই আশা রাখি। বন্ধু, তুমি যেমন আছো, ঠিক তেমনই থেকো।`;
+const letterEnding = "সব ভালোবাসা সহ,<br>তোমার বন্ধু";
+
+        // DOM elements
+        const loadingScreen = document.getElementById('loadingScreen');
+        const envelopeContainer = document.getElementById('envelopeContainer');
+        const envelope = document.getElementById('envelope');
+        const letterContainer = document.getElementById('letterContainer');
+        const letterText = document.getElementById('letterText');
+        const particlesContainer = document.getElementById('particlesContainer');
+        const thankYouPopup = document.getElementById('thankYouPopup');
+        const popupContent = document.getElementById('popupContent');
+        const closePopup = document.getElementById('closePopup');
+        const finalMessage = document.getElementById('finalMessage');
+        const recipientName = document.getElementById('recipientName');
+
+        // Set recipient name
+        recipientName.textContent = "Nafis";
+
+        // Create particles
+        function createParticles() {
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random position
+                const posX = Math.random() * 100;
+                const delay = Math.random() * 15;
+                const size = Math.random() * 10 + 5;
+                
+                // Random color
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                particle.style.left = `${posX}%`;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.background = color;
+                particle.style.animationDelay = `${delay}s`;
+                
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Create confetti
+        function createConfetti() {
+            const confettiCount = 100;
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                
+                // Random position
+                const posX = Math.random() * 100;
+                const delay = Math.random() * 3;
+                const size = Math.random() * 10 + 5;
+                
+                // Random color
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                confetti.style.left = `${posX}%`;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.background = color;
+                confetti.style.animationDelay = `${delay}s`;
+                
+                popupContent.appendChild(confetti);
+            }
+        }
+
+        // Loading screen
+        setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                envelopeContainer.style.display = 'flex';
+            }, 1000);
+        }, 3000);
+
+        // Envelope click handler
+        envelope.addEventListener('click', function() {
+            envelope.classList.add('open');
+            
+            setTimeout(() => {
+                envelopeContainer.style.display = 'none';
+                letterContainer.style.display = 'flex';
+                createParticles();
+                typeWriter();
+            }, 1500);
+        });
+
+        // Typewriter effect
+        function typeWriter() {
+            const paragraphs = [
+                `<p class="bangla-font"><span class="recipient-name">${letterGreeting}</span></p>`,
+                `<p class="bangla-font">${letterBody.replace(/\n/g, "<br>")}</p>`,
+                `<p class="bangla-font"><span class="sender-name">${letterEnding}</span></p>`
+            ];
+            let paraIndex = 0;
+            let charIndex = 0;
+            letterText.innerHTML = '<span class="typing-cursor"></span>';
+
+            function typeParagraph() {
+                if (paraIndex < paragraphs.length) {
+                    let currentPara = paragraphs[paraIndex].replace(/<[^>]+>/g, ''); // Remove tags for typing
+                    let displayPara = '';
+                    charIndex = 0;
+
+                    function typeChar() {
+                        if (charIndex <= currentPara.length) {
+                            displayPara = currentPara.slice(0, charIndex);
+                            letterText.innerHTML =
+                                paragraphs.slice(0, paraIndex).join('') +
+                                `<p class="bangla-font">${displayPara}<span class="typing-cursor"></span></p>`;
+                            charIndex++;
+                            setTimeout(typeChar, 40);
+                        } else {
+                            paraIndex++;
+                            setTimeout(typeParagraph, 400);
+                        }
+                    }
+                    typeChar();
+                } else {
+                    letterText.innerHTML = paragraphs.join('');
+                    setTimeout(() => {
+                        thankYouPopup.style.display = 'flex';
+                        setTimeout(() => {
+                            thankYouPopup.classList.add('show');
+                            createConfetti();
+                        }, 100);
+                    }, 20000);
+                }
+            }
+            typeParagraph();
+        }
+
+        // Close popup handler
+        closePopup.addEventListener('click', function() {
+            thankYouPopup.classList.remove('show');
+            
+            setTimeout(() => {
+                thankYouPopup.style.display = 'none';
+                
+                // Fade out letter
+                letterContainer.style.opacity = '0';
+                
+                setTimeout(() => {
+                    letterContainer.style.display = 'none';
+                    finalMessage.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        finalMessage.classList.add('show');
+                    }, 100);
+                }, 1000);
+            }, 500);
+        });
+    </script>
+</body>
+</html>
